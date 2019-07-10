@@ -34,7 +34,7 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
                 Prompt = stepContext.Context.Activity.CreateReply($"[MainDialog] I'm banking 🤖{Environment.NewLine}Would you like to check balance or make payment?"),
                 Choices = new[] {new Choice { Value = NewOrder }, new Choice { Value = TalkToSupport } }
             };
-
+            
             return await stepContext.PromptAsync(nameof(ChoicePrompt), promptOptions, cancellationToken);
         }
 

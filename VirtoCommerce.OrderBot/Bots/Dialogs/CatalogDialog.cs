@@ -45,7 +45,15 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
                 var card = new HeroCard
                 {
                     Images = new[] { new CardImage(item.ImgSrc) },
-                    Title = item.Name
+                    Title = item.Name,
+                    Buttons = new[] {
+                        new CardAction
+                        {
+                            Title = "Add to cart",
+                            Type = ActionTypes.ImBack,
+                            Value = item.Code
+                        }
+                    }
                 };
 
                 cards.Add(card.ToAttachment());

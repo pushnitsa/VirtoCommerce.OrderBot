@@ -1,9 +1,13 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Http;
 using VirtoCommerce.OrderBot.AutoRestClients.CartModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.CustomerModuleApi;
+using VirtoCommerce.OrderBot.Bots.Dialogs;
+using VirtoCommerce.OrderBot.Bots.Middlewares;
+using VirtoCommerce.OrderBot.Bots.Middlewares.Injector;
 using VirtoCommerce.OrderBot.Extensions;
 using VirtoCommerce.OrderBot.Infrastructure;
 using VirtoCommerce.OrderBot.Infrastructure.Autorest;
@@ -32,7 +36,30 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IAuthorizationService, AuthorizationService>();
             services.AddSingleton<IUserAuthState>(provider => provider.GetService<IAuthorizationService>());
 
+            services.AddSingleton<MainDialog>();
+            services.AddSingleton<AuthDialog>();
+            services.AddSingleton<CatalogDialog>();
+            services.AddSingleton<SearchDialog>();
+
             return services;
+        }
+
+        public static IServiceCollection AddMiddlewares(this IServiceCollection serviceCollection)
+        {
+            serviceCollection.AddTransient<AddCartMiddleware>();
+
+            return serviceCollection;
+        }
+
+        public static IApplicationBuilder AddMiddlewares(this IApplicationBuilder appBuilder)
+        {
+            var serviceLocator = appBuilder.ApplicationServices;
+
+            serviceLocator
+                .GetService<IMiddlewareInjector>()
+                .AddMiddleware(serviceLocator.GetService<AddCartMiddleware>());
+
+            return appBuilder;
         }
     }
 }

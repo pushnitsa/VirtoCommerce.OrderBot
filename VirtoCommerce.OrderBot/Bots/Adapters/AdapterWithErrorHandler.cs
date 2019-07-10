@@ -3,6 +3,7 @@ using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Extensions.Logging;
 using System;
+using VirtoCommerce.OrderBot.Bots.Middlewares.Injector;
 
 namespace VirtoCommerce.OrderBot.Bots.Adapters
 {
@@ -11,6 +12,7 @@ namespace VirtoCommerce.OrderBot.Bots.Adapters
         public AdapterWithErrorHandler(
             ICredentialProvider credentialProvider, 
             ILogger<BotFrameworkHttpAdapter> logger,
+            IMiddlewareInjector middlewareInjector,
             ConversationState conversationState = null)
             : base(credentialProvider)
         {
@@ -32,6 +34,8 @@ namespace VirtoCommerce.OrderBot.Bots.Adapters
                     }
                 }
             };
+
+            middlewareInjector.Inject(this);
         }
     }
 }

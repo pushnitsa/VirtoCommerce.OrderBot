@@ -1,7 +1,7 @@
 ﻿using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Schema;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi;
@@ -54,17 +54,27 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
 
                 if (products.Items != null)
                 {
-                    var cards = new List<Attachment>();
-                    foreach (var item in products.Items)
-                    {
-                        var card = new HeroCard
-                        {
-                            Images = new[] { new CardImage(item.ImgSrc) },
-                            Text = item.Name
-                        };
-
-                        cards.Add(card.ToAttachment());
-                    }
+                    var cards = products
+                        .Items
+                        .Select(
+                            item => new HeroCard
+                            {
+                                Images = new[] { new CardImage(item.ImgSrc) },
+                                Text = item.Name,
+                                Buttons = new[]
+                                {
+                                    new CardAction
+                                    {
+                                        Title = "Add to cart",
+                                        Type = ActionTypes.ImBack,
+                                        Value = item.Code
+                                    }
+                                }
+                            })
+                        .Select(
+                            card => card.ToAttachment()
+                            )
+                        .ToList();
 
                     await stepContext.Context.SendActivityAsync(MessageFactory.Carousel(cards), cancellationToken);
                 }

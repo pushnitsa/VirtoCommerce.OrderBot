@@ -63,5 +63,11 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
             return await stepContext.ReplaceDialogAsync(nameof(AuthDialog), cancellationToken: cancellationToken);
             
         }
+
+        protected override async Task<DialogTurnResult> OnBeginDialogAsync(DialogContext innerDc, object options, CancellationToken cancellationToken = new CancellationToken())
+        {
+
+            return await base.OnBeginDialogAsync(innerDc, options, cancellationToken);
+        }
     }
 }
