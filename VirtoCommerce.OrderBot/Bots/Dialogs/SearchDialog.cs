@@ -6,15 +6,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi.Models;
+using VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector;
 
 namespace VirtoCommerce.OrderBot.Bots.Dialogs
 {
-    public class SearchDialog : ComponentDialog
+    public class SearchDialog : InterceptorExtendedBaseDialog
     {
         private readonly ICatalogModuleSearch _catalogModuleSearch;
 
-        public SearchDialog(ICatalogModuleSearch catalogModuleSearch) 
-            : base(nameof(SearchDialog))
+        public SearchDialog(IMessageInterceptor messageInterceptor, ICatalogModuleSearch catalogModuleSearch) 
+            : base(nameof(SearchDialog), messageInterceptor)
         {
             _catalogModuleSearch = catalogModuleSearch;
 
@@ -67,7 +68,7 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
                                     {
                                         Title = "Add to cart",
                                         Type = ActionTypes.ImBack,
-                                        Value = item.Code
+                                        Value = $"add-to-cart:{item.Code}"
                                     }
                                 }
                             })
@@ -80,7 +81,7 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
                 }
                 else
                 {
-                    await stepContext.Context.SendActivityAsync(MessageFactory.Text("Nothing to find"), cancellationToken);
+                    await stepContext.Context.SendActivityAsync(MessageFactory.Text("Nothing found"), cancellationToken);
                 }
                 
             }

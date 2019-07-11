@@ -1,4 +1,5 @@
-﻿using Microsoft.Bot.Builder.Dialogs;
+﻿using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.Dialogs.Choices;
 using System;
 using System.Threading;
@@ -11,17 +12,17 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
     public class AuthDialog : ComponentDialog
     {
         private readonly IAuthorizationService _authorizationService;
-        private readonly IConversationStateAccessor _conversationStateAccessor;
+        private readonly ConversationState _conversationState;
 
         public AuthDialog(
-            IAuthorizationService authService, 
-            IConversationStateAccessor conversationStateAccessor, 
+            IAuthorizationService authService,
+            ConversationState conversationState,
             MainDialog mainDialog
             ) 
             : base(nameof(AuthDialog))
         {
             _authorizationService = authService;
-            _conversationStateAccessor = conversationStateAccessor;
+            _conversationState = conversationState;
 
             AddDialog(new ChoicePrompt(nameof(ChoicePrompt)));
             AddDialog(mainDialog);
@@ -37,7 +38,8 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
 
         private async Task<DialogTurnResult> AuthPlease(WaterfallStepContext stepContext, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var profile = await _conversationStateAccessor.GetAsync<UserProfile>(stepContext.Context, cancellationToken);
+            var profileStateAccessor = _conversationState.CreateProperty<UserProfile>(nameof(UserProfile));
+            var profile = await profileStateAccessor.GetAsync(stepContext.Context, () => new UserProfile(), cancellationToken);
 
             if (!await _authorizationService.IsAuthorizedAsync(profile.UserId))
             {

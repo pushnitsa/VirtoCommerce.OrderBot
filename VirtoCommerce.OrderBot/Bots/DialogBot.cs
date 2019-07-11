@@ -16,21 +16,18 @@ namespace VirtoCommerce.OrderBot.Bots
         private readonly BotState _conversationState;
         private readonly BotState _userState;
         private readonly ILogger _logger;
-        private readonly IConversationStateAccessor _conversationStateAccessor;
 
         public DialogBot(
             ConversationState conversationState, 
             UserState userState, 
             T dialog, 
-            ILogger<DialogBot<T>> logger,
-            IConversationStateAccessor conversationStateAccessor
+            ILogger<DialogBot<T>> logger
             )
         {
             _conversationState = conversationState;
             _userState = userState;
             _dialog = dialog;
             _logger = logger;
-            _conversationStateAccessor = conversationStateAccessor;
         }
 
         public override async Task OnTurnAsync(ITurnContext turnContext, CancellationToken cancellationToken = default(CancellationToken))
@@ -49,7 +46,8 @@ namespace VirtoCommerce.OrderBot.Bots
             {
                 if (member.Id != turnContext.Activity.Recipient.Id)
                 {
-                    var profile = await _conversationStateAccessor.GetAsync<UserProfile>(turnContext, cancellationToken);
+                    var profileStateAccessor = _conversationState.CreateProperty<UserProfile>(nameof(UserProfile));
+                    var profile = await profileStateAccessor.GetAsync(turnContext, () => new UserProfile(), cancellationToken);
 
                     profile.UserId = member.Id;
 

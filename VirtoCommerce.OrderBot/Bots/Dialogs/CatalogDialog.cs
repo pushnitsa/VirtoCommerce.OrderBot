@@ -6,18 +6,20 @@ using System.Threading;
 using System.Threading.Tasks;
 using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi.Models;
+using VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector;
 
 namespace VirtoCommerce.OrderBot.Bots.Dialogs
 {
-    public class CatalogDialog : ComponentDialog
+    public class CatalogDialog : InterceptorExtendedBaseDialog
     {
         private readonly ICatalogModuleSearch _catalogModuleSearch;
 
         public CatalogDialog(
+            IMessageInterceptor messageInterceptor,
             ICatalogModuleSearch catalogModuleSearch, 
             SearchDialog searchDialog
             ) 
-            : base(nameof(CatalogDialog))
+            : base(nameof(CatalogDialog), messageInterceptor)
         {
             _catalogModuleSearch = catalogModuleSearch;
 
@@ -51,7 +53,7 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
                         {
                             Title = "Add to cart",
                             Type = ActionTypes.ImBack,
-                            Value = item.Code
+                            Value = $"add-to-cart:{item.Code}"
                         }
                     }
                 };
