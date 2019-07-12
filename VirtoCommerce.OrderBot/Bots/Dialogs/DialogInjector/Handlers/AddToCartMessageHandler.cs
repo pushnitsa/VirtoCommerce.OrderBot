@@ -25,7 +25,7 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector.Handlers
                 dialogContext.Dialogs.Add(_dialog);
             }
             
-            return await dialogContext.BeginDialogAsync(_dialog.GetType().Name, cancellationToken: cancellationToken);
+            return await dialogContext.BeginDialogAsync(_dialog.GetType().Name, message.Substring(AddToCartCommand.Length), cancellationToken);
         }
 
         public bool IsSuitableHandler(string message)

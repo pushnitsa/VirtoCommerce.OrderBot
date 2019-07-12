@@ -4,6 +4,7 @@ using Microsoft.Bot.Builder.Dialogs.Choices;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using VirtoCommerce.OrderBot.AutoRestClients.CustomerModuleApi;
 using VirtoCommerce.OrderBot.Bots.Models;
 using VirtoCommerce.OrderBot.Security;
 
@@ -13,9 +14,11 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
     {
         private readonly IAuthorizationService _authorizationService;
         private readonly ConversationState _conversationState;
+        private readonly ICustomerModule _customerModule;
 
         public AuthDialog(
             IAuthorizationService authService,
+            ICustomerModule customerModule,
             ConversationState conversationState,
             MainDialog mainDialog
             ) 
@@ -23,6 +26,7 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
         {
             _authorizationService = authService;
             _conversationState = conversationState;
+            _customerModule = customerModule;
 
             AddDialog(new ChoicePrompt(nameof(ChoicePrompt)));
             AddDialog(mainDialog);
@@ -41,7 +45,7 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
             var profileStateAccessor = _conversationState.CreateProperty<UserProfile>(nameof(UserProfile));
             var profile = await profileStateAccessor.GetAsync(stepContext.Context, () => new UserProfile(), cancellationToken);
 
-            if (!await _authorizationService.IsAuthorizedAsync(profile.UserId))
+            if (string.IsNullOrEmpty(profile.Customer.Id) && !await _authorizationService.IsAuthorizedAsync(profile.UserId))
             {
                 var promptOptions = new PromptOptions
                 {
@@ -51,25 +55,15 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
 
                 return await stepContext.PromptAsync(nameof(ChoicePrompt), promptOptions, cancellationToken);
             }
-            else
-            {
-                await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
-                return await stepContext.BeginDialogAsync(nameof(MainDialog), cancellationToken: cancellationToken);
-            }
+
+            profile.Customer = await _authorizationService.GetCustomerAsync(profile.UserId);
+            
+            return await stepContext.BeginDialogAsync(nameof(MainDialog), cancellationToken: cancellationToken);
         }
 
         private async Task<DialogTurnResult> TryToAuth(WaterfallStepContext stepContext, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var response = (stepContext.Result as FoundChoice)?.Value;
-
             return await stepContext.ReplaceDialogAsync(nameof(AuthDialog), cancellationToken: cancellationToken);
-            
-        }
-
-        protected override async Task<DialogTurnResult> OnBeginDialogAsync(DialogContext innerDc, object options, CancellationToken cancellationToken = new CancellationToken())
-        {
-
-            return await base.OnBeginDialogAsync(innerDc, options, cancellationToken);
         }
     }
 }

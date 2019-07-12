@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using VirtoCommerce.OrderBot.Bots.Models;
 
 namespace VirtoCommerce.OrderBot.Security
 {
-    public interface IAuthorizationService : IUserAuthState
+    public interface IAuthorizationService
     {
+        Task<bool> IsAuthorizedAsync(string identifier);
+
+        Task<Customer> GetCustomerAsync(string identifier);
     }
 }

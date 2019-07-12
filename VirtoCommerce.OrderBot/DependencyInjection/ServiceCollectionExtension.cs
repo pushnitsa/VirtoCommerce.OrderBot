@@ -5,11 +5,14 @@ using System.Net.Http;
 using VirtoCommerce.OrderBot.AutoRestClients.CartModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.CustomerModuleApi;
+using VirtoCommerce.OrderBot.AutoRestClients.PricingModuleApi;
+using VirtoCommerce.OrderBot.AutoRestClients.StoreModuleApi;
 using VirtoCommerce.OrderBot.Bots.Dialogs;
 using VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector;
 using VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector.Handlers;
 using VirtoCommerce.OrderBot.Bots.Middlewares;
 using VirtoCommerce.OrderBot.Bots.Middlewares.Injector;
+using VirtoCommerce.OrderBot.Builder;
 using VirtoCommerce.OrderBot.Extensions;
 using VirtoCommerce.OrderBot.Infrastructure;
 using VirtoCommerce.OrderBot.Infrastructure.Autorest;
@@ -31,12 +34,13 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<ICartModule>(provider => new CartModule(new VirtoCommerceCartRESTAPIdocumentation(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.Url, provider.GetService<VirtoCommerceApiRequestHandler>(), httpHandlerWithCompression).DisableRetries().WithTimeout(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.RequestTimeout)));
             services.AddSingleton<ICustomerModule>(provider => new CustomerModule(new VirtoCommerceCustomerRESTAPIdocumentation(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.Url, provider.GetService<VirtoCommerceApiRequestHandler>(), httpHandlerWithCompression).DisableRetries().WithTimeout(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.RequestTimeout)));
             services.AddSingleton<ICatalogModuleSearch>(provider => new CatalogModuleSearch(new VirtoCommerceCatalogRESTAPIdocumentation(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.Url, provider.GetService<VirtoCommerceApiRequestHandler>(), httpHandlerWithCompression).DisableRetries().WithTimeout(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.RequestTimeout)));
+            services.AddSingleton<IStoreModule>(provider => new StoreModule(new VirtoCommerceStoreRESTAPIdocumentation(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.Url, provider.GetService<VirtoCommerceApiRequestHandler>(), httpHandlerWithCompression).DisableRetries().WithTimeout(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.RequestTimeout)));
+            services.AddSingleton<IPricingModule>(provider => new PricingModule(new VirtoCommercePricingRESTAPIdocumentation(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.Url, provider.GetService<VirtoCommerceApiRequestHandler>(), httpHandlerWithCompression).DisableRetries().WithTimeout(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.RequestTimeout)));
         }
 
         public static IServiceCollection AddBotServices(this IServiceCollection services)
         {
-            services.AddSingleton<IAuthorizationService, AuthorizationService>();
-            services.AddSingleton<IUserAuthState>(provider => provider.GetService<IAuthorizationService>());
+            services.AddTransient<IAuthorizationService, AuthorizationService>();
             services.AddSingleton<IMessageInterceptor, MessageInterceptor>();
 
             services.AddSingleton<AddToCartMessageHandler>();
@@ -44,6 +48,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<MessageHandlerKeeper>();
             services.AddSingleton<IMessageHandlerReciever>(provider => provider.GetService<MessageHandlerKeeper>());
             services.AddSingleton<IMessageHandlerStorage>(provider => provider.GetService<MessageHandlerKeeper>());
+            services.AddSingleton<ICartBuilderFactory, CartBuilderFactory>();
 
             services.AddSingleton<MainDialog>();
             services.AddSingleton<AuthDialog>();
