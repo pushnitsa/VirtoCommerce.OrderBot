@@ -56,7 +56,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
         public static IServiceCollection AddMiddlewares(this IServiceCollection serviceCollection)
         {
-            serviceCollection.AddTransient<AddCartMiddleware>();
+            serviceCollection.AddTransient<SampleMiddleware>();
 
             return serviceCollection;
         }
@@ -67,7 +67,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
             serviceLocator
                 .GetService<IMiddlewareInjector>()
-                .AddMiddleware(serviceLocator.GetService<AddCartMiddleware>());
+                .AddMiddleware(serviceLocator.GetService<SampleMiddleware>());
 
             return appBuilder;
         }

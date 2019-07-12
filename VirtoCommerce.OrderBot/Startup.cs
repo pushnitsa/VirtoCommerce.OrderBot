@@ -36,7 +36,6 @@ namespace VirtoCommerce.OrderBot
             services.AddSingleton<IStorage, MemoryStorage>();
             services.AddSingleton<UserState>();
             services.AddSingleton<ConversationState>();
-            services.AddSingleton<IConversationStateAccessor, ConversationStateAccessorDecorator>();
             services.AddTransient<IBot, DialogBot<AuthDialog>>();
 
             services.AddBotServices();
@@ -63,6 +62,7 @@ namespace VirtoCommerce.OrderBot
             app.UseMvc();
 
             app.AddMiddlewares();
+            app.AddInterceptors();
         }
     }
 }
