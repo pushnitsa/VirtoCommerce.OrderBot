@@ -5,6 +5,7 @@ using System.Net.Http;
 using VirtoCommerce.OrderBot.AutoRestClients.CartModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.CustomerModuleApi;
+using VirtoCommerce.OrderBot.AutoRestClients.OrdersModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.PricingModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.StoreModuleApi;
 using VirtoCommerce.OrderBot.Bots.Dialogs;
@@ -36,6 +37,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<ICatalogModuleSearch>(provider => new CatalogModuleSearch(new VirtoCommerceCatalogRESTAPIdocumentation(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.Url, provider.GetService<VirtoCommerceApiRequestHandler>(), httpHandlerWithCompression).DisableRetries().WithTimeout(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.RequestTimeout)));
             services.AddSingleton<IStoreModule>(provider => new StoreModule(new VirtoCommerceStoreRESTAPIdocumentation(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.Url, provider.GetService<VirtoCommerceApiRequestHandler>(), httpHandlerWithCompression).DisableRetries().WithTimeout(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.RequestTimeout)));
             services.AddSingleton<IPricingModule>(provider => new PricingModule(new VirtoCommercePricingRESTAPIdocumentation(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.Url, provider.GetService<VirtoCommerceApiRequestHandler>(), httpHandlerWithCompression).DisableRetries().WithTimeout(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.RequestTimeout)));
+            services.AddSingleton<IOrderModule>(provider => new OrderModule(new VirtoCommerceOrdersRESTAPIdocumentation(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.Url, provider.GetService<VirtoCommerceApiRequestHandler>(), httpHandlerWithCompression).DisableRetries().WithTimeout(provider.GetService<IOptions<PlatformEndpointOptions>>().Value.RequestTimeout)));
         }
 
         public static IServiceCollection AddBotServices(this IServiceCollection services)
@@ -55,6 +57,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<CatalogDialog>();
             services.AddSingleton<SearchDialog>();
             services.AddSingleton<AddToCartDialog>();
+            services.AddSingleton<ViewCartDialog>();
 
             return services;
         }

@@ -2,13 +2,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using VirtoCommerce.OrderBot.Infrastructure;
 
 namespace VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector.Handlers
 {
     public class AddToCartMessageHandler : IMessageHandler
     {
-        private const string AddToCartCommand = "add-to-cart:";
-
         private readonly AddToCartDialog _dialog;
 
         public AddToCartMessageHandler(AddToCartDialog dialog)
@@ -25,12 +24,12 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector.Handlers
                 dialogContext.Dialogs.Add(_dialog);
             }
             
-            return await dialogContext.BeginDialogAsync(_dialog.GetType().Name, message.Substring(AddToCartCommand.Length), cancellationToken);
+            return await dialogContext.BeginDialogAsync(_dialog.GetType().Name, message.Substring(BotCommands.AddToCart.Length), cancellationToken);
         }
 
         public bool IsSuitableHandler(string message)
         {
-            return message.StartsWith(AddToCartCommand, StringComparison.InvariantCultureIgnoreCase);
+            return message.StartsWith(BotCommands.AddToCart, StringComparison.InvariantCultureIgnoreCase);
         }
     }
 }

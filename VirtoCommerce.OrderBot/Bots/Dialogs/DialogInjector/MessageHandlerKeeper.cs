@@ -9,7 +9,7 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector
     {
         private readonly ICollection<IMessageHandler> _messageHandlerCollection = new List<IMessageHandler>();
 
-        public void AddHandler(IMessageHandler messageHandler)
+        public IMessageHandlerStorage AddHandler(IMessageHandler messageHandler)
         {
             if (messageHandler == null)
             {
@@ -20,6 +20,8 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector
             {
                 _messageHandlerCollection.Add(messageHandler);
             }
+
+            return this;
         }
 
         public IMessageHandler GetHandler(string message)

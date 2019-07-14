@@ -1,5 +1,6 @@
 ﻿using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Builder.Dialogs.Choices;
 using System;
 using System.Linq;
 using System.Threading;
@@ -18,24 +19,34 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
         private readonly ICartBuilderFactory _cartBuilderFactory;
         private readonly ICatalogModuleSearch _catalogModuleSearch;
         private readonly IPricingModule _pricingModule;
+        private readonly ViewCartDialog _viewCartDialog;
+
+        private const string Back = "Back to search";
+        private const string ViewCart = "View cart";
 
         public AddToCartDialog(
             ICartBuilderFactory cartBuilderFactory, 
             ICatalogModuleSearch catalogModuleSearch,
             IPricingModule pricingModule,
-            ConversationState conversationState) 
+            ConversationState conversationState,
+            ViewCartDialog viewCartDialog) 
             : base(nameof(AddToCartDialog))
         {
             _conversationState = conversationState;
             _cartBuilderFactory = cartBuilderFactory;
             _catalogModuleSearch = catalogModuleSearch;
             _pricingModule = pricingModule;
+            _viewCartDialog = viewCartDialog;
 
             AddDialog(new NumberPrompt<int>(nameof(NumberPrompt<int>)));
+            AddDialog(_viewCartDialog);
+            AddDialog(new ChoicePrompt(nameof(ChoicePrompt)));
             AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
             {
                 RequestQuantityAsync,
-                ConfirmAsync
+                ConfirmAsync,
+                ViewCartPromptAsync,
+                BackOrViewCartAsync
             }));
 
             InitialDialogId = nameof(WaterfallDialog);
@@ -85,14 +96,40 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
                         Code = product.Code,
                         Name = product.Name,
                         ProductId = product.Id,
-                        ListPrice = Convert.ToDecimal(productPrice?.Prices?.FirstOrDefault()?.List)
+                        ListPrice = Convert.ToDecimal(productPrice?.Prices?.FirstOrDefault()?.List),
+                        ImgUrl = product.ImgSrc
                     };
 
                     await cartBuilder.AddCartItemAsync(lineItem, quantity);
                     await cartBuilder.SaveCartAsync();
-
-                    await stepContext.Context.SendActivityAsync(MessageFactory.Text("Product added to cart"), cancellationToken);
                 }
+            }
+
+            return await stepContext.NextAsync(cancellationToken: cancellationToken);
+        }
+
+        private async Task<DialogTurnResult> ViewCartPromptAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var options = new PromptOptions
+            {
+                Prompt = MessageFactory.Text("What you like to do?"),
+                Choices = new []
+                {
+                    new Choice(ViewCart), 
+                    new Choice(Back)
+                }
+            };
+
+            return await stepContext.PromptAsync(nameof(ChoicePrompt), options, cancellationToken);
+        }
+
+        private async Task<DialogTurnResult> BackOrViewCartAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var result = ((FoundChoice) stepContext.Result)?.Value;
+
+            if (string.Equals(result, ViewCart, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return await stepContext.BeginDialogAsync(_viewCartDialog.GetType().Name, cancellationToken: cancellationToken);
             }
 
             return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi;
 using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi.Models;
 using VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector;
+using VirtoCommerce.OrderBot.Infrastructure;
 
 namespace VirtoCommerce.OrderBot.Bots.Dialogs
 {
@@ -53,7 +54,7 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
                         {
                             Title = "Add to cart",
                             Type = ActionTypes.ImBack,
-                            Value = $"add-to-cart:{item.Code}"
+                            Value = $"{BotCommands.AddToCart}{item.Code}"
                         }
                     }
                 };

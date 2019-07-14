@@ -13,5 +13,7 @@
         public string CatalogId { get; set; }
 
         public string CategoryId { get; set; }
+
+        public string ImgUrl { get; set; }
     }
 }

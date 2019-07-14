@@ -14,10 +14,10 @@ namespace VirtoCommerce.OrderBot.Builder
     {
         private readonly ICartModule _cartModule;
  
-        private readonly string _cartName = "Bot cart";
+        private const string CartName = "Bot cart";
 
         private Customer _customer;
-        private ShoppingCart _cart;
+        private api.ShoppingCart _cart;
         private bool _isDisposed;
 
         private Customer Customer
@@ -26,7 +26,7 @@ namespace VirtoCommerce.OrderBot.Builder
             set => _customer = value ?? throw new ArgumentNullException(nameof(Customer));
         }
 
-        private ShoppingCart Cart
+        private api.ShoppingCart Cart
         {
             get => _isDisposed ? throw new ObjectDisposedException(GetType().Name) : _cart;
             set => _cart = value;
@@ -59,9 +59,26 @@ namespace VirtoCommerce.OrderBot.Builder
                     Name = lineItem.Name,
                     ProductId = lineItem.ProductId,
                     Quantity = Math.Max(1, quantity),
-                    Sku = lineItem.Code
+                    Sku = lineItem.Code,
+                    ImageUrl = lineItem.ImgUrl
                 });
             }
+        }
+
+        public async Task<dto.LineItem[]> GetLineItemsFromCartAsync()
+        {
+            await LoadOrCreateNewTransientCart();
+
+            return Cart.Items.Select(l => new dto.LineItem
+            {
+                CatalogId = l.CatalogId,
+                CategoryId = l.CategoryId,
+                Code = l.Sku,
+                ListPrice = Convert.ToDecimal(l.ListPrice),
+                Name = l.Name,
+                ProductId = l.ProductId,
+                ImgUrl = l.ImageUrl
+            }).ToArray();
         }
 
         public async Task SaveCartAsync()
@@ -78,14 +95,46 @@ namespace VirtoCommerce.OrderBot.Builder
             }
         }
 
-        private async Task<ShoppingCart> SearchCartAsync()
+        public async Task<dto.ShoppingCart> GetCartAsync()
+        {
+            await LoadOrCreateNewTransientCart();
+
+            return new dto.ShoppingCart
+            {
+                Id = Cart.Id,
+                Name = Cart.Name,
+                Items = Cart
+                    .Items
+                    .Select(i => new dto.LineItem
+                    {
+                        CatalogId = i.CatalogId,
+                        CategoryId = i.CategoryId,
+                        Code = i.Sku,
+                        ImgUrl = i.ImageUrl,
+                        ListPrice = Convert.ToDecimal(i.ListPrice),
+                        Name = i.Name,
+                        ProductId = i.ProductId
+                    })
+                    .ToArray()
+            };
+        }
+
+        public async Task RemoveCartAsync()
+        {
+            await LoadOrCreateNewTransientCart();
+
+            await _cartModule.DeleteCartsAsync(new[] { Cart.Id });
+        }
+
+
+        private async Task<api.ShoppingCart> SearchCartAsync()
         {
             var criteria = new ShoppingCartSearchCriteria
             {
                 Currency = Customer.Currency,
                 CustomerId = Customer.Id,
                 StoreId = Customer.StoreId,
-                Name = _cartName
+                Name = CartName
             };
 
             var searchResult = await _cartModule.SearchAsync(criteria);
@@ -93,12 +142,12 @@ namespace VirtoCommerce.OrderBot.Builder
             return searchResult.Results.FirstOrDefault();
         }
 
-        private ShoppingCart CreateCart()
+        private api.ShoppingCart CreateCart()
         {
-            return new ShoppingCart
+            return new api.ShoppingCart
             {
                 CustomerId = Customer.Id,
-                Name = _cartName,
+                Name = CartName,
                 StoreId = Customer.StoreId,
                 IsAnonymous = false,
                 CustomerName = Customer.Name,

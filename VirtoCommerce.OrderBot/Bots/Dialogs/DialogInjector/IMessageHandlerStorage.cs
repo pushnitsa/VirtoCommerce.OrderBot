@@ -4,6 +4,6 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector
 {
     public interface IMessageHandlerStorage
     {
-        void AddHandler(IMessageHandler messageHandler);
+        IMessageHandlerStorage AddHandler(IMessageHandler messageHandler);
     }
 }
