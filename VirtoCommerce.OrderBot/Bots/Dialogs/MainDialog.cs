@@ -1,7 +1,6 @@
 ﻿using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.Dialogs.Choices;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,7 +30,7 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
         {
             var promptOptions = new PromptOptions
             {
-                Prompt = stepContext.Context.Activity.CreateReply($"[MainDialog] I'm banking 🤖{Environment.NewLine}Would you like to check balance or make payment?"),
+                Prompt = MessageFactory.Text("I am VirtoCommerce order bot. Choose what you want to do."),
                 Choices = new[] {new Choice { Value = NewOrder }, new Choice { Value = TalkToSupport } }
             };
             
