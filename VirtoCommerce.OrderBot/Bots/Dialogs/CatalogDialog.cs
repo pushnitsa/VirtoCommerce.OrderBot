@@ -1,28 +1,28 @@
 ﻿using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Schema;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi;
-using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi.Models;
 using VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector;
-using VirtoCommerce.OrderBot.Infrastructure;
+using VirtoCommerce.OrderBot.Bots.Models.Converters;
+using VirtoCommerce.OrderBot.Fetcher;
+using dto = VirtoCommerce.OrderBot.Bots.Models;
 
 namespace VirtoCommerce.OrderBot.Bots.Dialogs
 {
     public class CatalogDialog : InterceptorExtendedBaseDialog
     {
-        private readonly ICatalogModuleSearch _catalogModuleSearch;
+        private readonly IProductFetcher _productFetcher;
 
         public CatalogDialog(
             IMessageInterceptor messageInterceptor,
-            ICatalogModuleSearch catalogModuleSearch, 
+            IProductFetcher productFetcher,
             SearchDialog searchDialog
             ) 
             : base(nameof(CatalogDialog), messageInterceptor)
         {
-            _catalogModuleSearch = catalogModuleSearch;
+            _productFetcher = productFetcher;
 
             AddDialog(new WaterfallDialog(nameof(WaterfallDialog), new WaterfallStep[]
             {
@@ -35,36 +35,16 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
 
         private async Task<DialogTurnResult> GreetingsMessageAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            var criteria = new ProductSearchCriteria
+            var criteria = new dto.ProductSearchCriteria
             {
                 Take = 20
             };
 
-            var productSearchResult = await _catalogModuleSearch.SearchProductsAsync(criteria, cancellationToken);
+            var products = await _productFetcher.GetProductsAsync(criteria);
 
-            var cards = new List<Attachment>();
-            foreach (var item in productSearchResult.Items)
-            {
-                var card = new HeroCard
-                {
-                    Images = new[] { new CardImage(item.ImgSrc) },
-                    Title = item.Name,
-                    Buttons = new[] {
-                        new CardAction
-                        {
-                            Title = "Add to cart",
-                            Type = ActionTypes.ImBack,
-                            Value = $"{BotCommands.AddToCart}{item.Code}"
-                        }
-                    }
-                };
+            var cards = products.GetCards();
 
-                cards.Add(card.ToAttachment());
-            }
-
-            var attachments = MessageFactory.Carousel(cards);
-
-            await stepContext.Context.SendActivityAsync(attachments, cancellationToken);
+            await stepContext.Context.SendActivityAsync(MessageFactory.Carousel(cards.Select(c => c.ToAttachment())), cancellationToken);
             
             return await stepContext.BeginDialogAsync(nameof(SearchDialog), cancellationToken: cancellationToken);
         }

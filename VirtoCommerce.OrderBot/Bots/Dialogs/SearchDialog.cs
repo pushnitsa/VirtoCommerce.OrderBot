@@ -4,21 +4,21 @@ using Microsoft.Bot.Schema;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi;
-using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi.Models;
 using VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector;
-using VirtoCommerce.OrderBot.Infrastructure;
+using VirtoCommerce.OrderBot.Bots.Models.Converters;
+using VirtoCommerce.OrderBot.Fetcher;
+using dto = VirtoCommerce.OrderBot.Bots.Models;
 
 namespace VirtoCommerce.OrderBot.Bots.Dialogs
 {
     public class SearchDialog : InterceptorExtendedBaseDialog
     {
-        private readonly ICatalogModuleSearch _catalogModuleSearch;
+        private readonly IProductFetcher _productFetcher;
 
-        public SearchDialog(IMessageInterceptor messageInterceptor, ICatalogModuleSearch catalogModuleSearch) 
+        public SearchDialog(IMessageInterceptor messageInterceptor, IProductFetcher productFetcher) 
             : base(nameof(SearchDialog), messageInterceptor)
         {
-            _catalogModuleSearch = catalogModuleSearch;
+            _productFetcher = productFetcher;
 
             AddDialog(new TextPrompt(nameof(TextPrompt)));
 
@@ -47,44 +47,23 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
 
             if (!string.IsNullOrEmpty(result))
             {
-                var searchCriteria = new ProductSearchCriteria
+                var criteria = new dto.ProductSearchCriteria
                 {
                     SearchPhrase = result
                 };
+                var products = await _productFetcher.GetProductsAsync(criteria);
 
-                var products = await _catalogModuleSearch.SearchProductsAsync(searchCriteria, cancellationToken);
-
-                if (products.Items != null)
+                if (products.Length != 0)
                 {
-                    var cards = products
-                        .Items
-                        .Select(
-                            item => new HeroCard
-                            {
-                                Images = new[] { new CardImage(item.ImgSrc) },
-                                Text = item.Name,
-                                Buttons = new[]
-                                {
-                                    new CardAction
-                                    {
-                                        Title = "Add to cart",
-                                        Type = ActionTypes.ImBack,
-                                        Value = $"{BotCommands.AddToCart}{item.Code}"
-                                    }
-                                }
-                            })
-                        .Select(
-                            card => card.ToAttachment()
-                            )
-                        .ToList();
+                    var cards = products.GetCards();
 
-                    await stepContext.Context.SendActivityAsync(MessageFactory.Carousel(cards), cancellationToken);
+                    await stepContext.Context.SendActivityAsync(MessageFactory.Carousel(cards.Select(c => c.ToAttachment())), cancellationToken);
                 }
                 else
                 {
-                    await stepContext.Context.SendActivityAsync(MessageFactory.Text("Nothing found"), cancellationToken);
+                    await stepContext.Context.SendActivityAsync(MessageFactory.Text("Nothing found"),
+                        cancellationToken);
                 }
-                
             }
 
             return await stepContext.ReplaceDialogAsync(nameof(SearchDialog), cancellationToken: cancellationToken);

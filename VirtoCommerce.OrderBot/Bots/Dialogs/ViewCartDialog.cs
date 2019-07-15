@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using VirtoCommerce.OrderBot.AutoRestClients.OrdersModuleApi;
 using VirtoCommerce.OrderBot.Bots.Dialogs.DialogInjector;
 using VirtoCommerce.OrderBot.Bots.Models;
+using VirtoCommerce.OrderBot.Bots.Models.Converters;
 using VirtoCommerce.OrderBot.Builder;
 
 namespace VirtoCommerce.OrderBot.Bots.Dialogs
@@ -54,15 +55,9 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
             {
                 var lineItems = await cartBuilder.GetLineItemsFromCartAsync();
 
-                var cards = lineItems
-                    .Select(l => new HeroCard
-                    {
-                        Images = new[] { new CardImage(l.ImgUrl) },
-                        Title = l.Name
-                    })
-                    .Select(l => l.ToAttachment()).ToArray();
+                var cards = lineItems.GetCards();
 
-                await stepContext.Context.SendActivityAsync(MessageFactory.Carousel(cards), cancellationToken);
+                await stepContext.Context.SendActivityAsync(MessageFactory.Carousel(cards.Select(c => c.ToAttachment())), cancellationToken);
             }
 
             return await stepContext.NextAsync(cancellationToken: cancellationToken);

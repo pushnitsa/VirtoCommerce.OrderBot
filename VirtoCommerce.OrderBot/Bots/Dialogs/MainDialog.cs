@@ -54,12 +54,5 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
 
             return await stepContext.EndDialogAsync(cancellationToken: cancellationToken);
         }
-
-        private async Task<DialogTurnResult> InitialStep(WaterfallStepContext stepContext, CancellationToken cancellationToken)
-        {
-            await stepContext.Context.SendActivityAsync(MessageFactory.Text("Test"), cancellationToken);
-
-            return await stepContext.PromptAsync(nameof(ChoicePrompt), null, cancellationToken);
-        }
     }
 }

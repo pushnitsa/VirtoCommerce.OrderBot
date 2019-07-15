@@ -55,7 +55,7 @@ namespace VirtoCommerce.OrderBot.Builder
                     CatalogId = lineItem.CatalogId,
                     CategoryId = lineItem.CategoryId,
                     Currency = Customer.Currency,
-                    ListPrice = Convert.ToDouble(lineItem.ListPrice),
+                    ListPrice = Convert.ToDouble(lineItem.Price),
                     Name = lineItem.Name,
                     ProductId = lineItem.ProductId,
                     Quantity = Math.Max(1, quantity),
@@ -74,10 +74,12 @@ namespace VirtoCommerce.OrderBot.Builder
                 CatalogId = l.CatalogId,
                 CategoryId = l.CategoryId,
                 Code = l.Sku,
-                ListPrice = Convert.ToDecimal(l.ListPrice),
+                Price = Convert.ToDecimal(l.ListPrice),
+                Currency = l.Currency,
                 Name = l.Name,
                 ProductId = l.ProductId,
-                ImgUrl = l.ImageUrl
+                ImgUrl = l.ImageUrl,
+                Quantity = l.Quantity ?? 0
             }).ToArray();
         }
 
@@ -111,9 +113,11 @@ namespace VirtoCommerce.OrderBot.Builder
                         CategoryId = i.CategoryId,
                         Code = i.Sku,
                         ImgUrl = i.ImageUrl,
-                        ListPrice = Convert.ToDecimal(i.ListPrice),
+                        Price = Convert.ToDecimal(i.ListPrice),
+                        Currency = i.Currency,
                         Name = i.Name,
-                        ProductId = i.ProductId
+                        ProductId = i.ProductId,
+                        Quantity = i.Quantity ?? 0
                     })
                     .ToArray()
             };

@@ -5,11 +5,9 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi;
-using VirtoCommerce.OrderBot.AutoRestClients.CatalogModuleApi.Models;
-using VirtoCommerce.OrderBot.AutoRestClients.PricingModuleApi;
 using VirtoCommerce.OrderBot.Bots.Models;
 using VirtoCommerce.OrderBot.Builder;
+using VirtoCommerce.OrderBot.Fetcher;
 
 namespace VirtoCommerce.OrderBot.Bots.Dialogs
 {
@@ -17,26 +15,23 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
     {
         private readonly ConversationState _conversationState;
         private readonly ICartBuilderFactory _cartBuilderFactory;
-        private readonly ICatalogModuleSearch _catalogModuleSearch;
-        private readonly IPricingModule _pricingModule;
+        private readonly IProductFetcher _productFetcher;
         private readonly ViewCartDialog _viewCartDialog;
 
         private const string Back = "Back to search";
         private const string ViewCart = "View cart";
 
         public AddToCartDialog(
-            ICartBuilderFactory cartBuilderFactory, 
-            ICatalogModuleSearch catalogModuleSearch,
-            IPricingModule pricingModule,
+            ICartBuilderFactory cartBuilderFactory,
+            IProductFetcher productFetcher,
             ConversationState conversationState,
             ViewCartDialog viewCartDialog) 
             : base(nameof(AddToCartDialog))
         {
             _conversationState = conversationState;
             _cartBuilderFactory = cartBuilderFactory;
-            _catalogModuleSearch = catalogModuleSearch;
-            _pricingModule = pricingModule;
             _viewCartDialog = viewCartDialog;
+            _productFetcher = productFetcher;
 
             AddDialog(new NumberPrompt<int>(nameof(NumberPrompt<int>)));
             AddDialog(_viewCartDialog);
@@ -71,21 +66,18 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
             var code = (string) stepContext.Values["code"];
             var quantity = (int) stepContext.Result;
 
-            var userProfileAccessor = _conversationState.CreateProperty<UserProfile>(nameof(UserProfile));
-            var userProfile = await userProfileAccessor.GetAsync(stepContext.Context, () => new UserProfile(), cancellationToken);
-
             var productSearchCriteria = new ProductSearchCriteria
             {
                 SearchPhrase = code
             };
 
-            var searchResult = await _catalogModuleSearch.SearchProductsAsync(productSearchCriteria, cancellationToken);
-            var product = searchResult.Items.FirstOrDefault();
+            var products = await _productFetcher.GetProductsAsync(productSearchCriteria);
 
-            if (product != null)
+            if (products.Length != 0)
             {
-                var priceSearchResult = await _pricingModule.SearchProductPricesAsync(criteriaproductId: product.Id, cancellationToken: cancellationToken);
-                var productPrice = priceSearchResult.Results.FirstOrDefault();
+                var product = products.First();
+                var userProfileAccessor = _conversationState.CreateProperty<UserProfile>(nameof(UserProfile));
+                var userProfile = await userProfileAccessor.GetAsync(stepContext.Context, () => new UserProfile(), cancellationToken);
 
                 using (var cartBuilder = _cartBuilderFactory.Create(userProfile.Customer))
                 {
@@ -94,10 +86,11 @@ namespace VirtoCommerce.OrderBot.Bots.Dialogs
                         CatalogId = product.CatalogId,
                         CategoryId = product.CategoryId,
                         Code = product.Code,
+                        Currency = product.Currency,
+                        ImgUrl = product.ImageUrl,
                         Name = product.Name,
-                        ProductId = product.Id,
-                        ListPrice = Convert.ToDecimal(productPrice?.Prices?.FirstOrDefault()?.List),
-                        ImgUrl = product.ImgSrc
+                        Price = product.Price,
+                        ProductId = product.Id
                     };
 
                     await cartBuilder.AddCartItemAsync(lineItem, quantity);

@@ -15,6 +15,7 @@ using VirtoCommerce.OrderBot.Bots.Middlewares;
 using VirtoCommerce.OrderBot.Bots.Middlewares.Injector;
 using VirtoCommerce.OrderBot.Builder;
 using VirtoCommerce.OrderBot.Extensions;
+using VirtoCommerce.OrderBot.Fetcher;
 using VirtoCommerce.OrderBot.Infrastructure;
 using VirtoCommerce.OrderBot.Infrastructure.Autorest;
 using VirtoCommerce.OrderBot.Security;
@@ -51,6 +52,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IMessageHandlerReciever>(provider => provider.GetService<MessageHandlerKeeper>());
             services.AddSingleton<IMessageHandlerStorage>(provider => provider.GetService<MessageHandlerKeeper>());
             services.AddSingleton<ICartBuilderFactory, CartBuilderFactory>();
+            services.AddSingleton<IProductFetcher, ProductFetcher>();
 
             services.AddSingleton<MainDialog>();
             services.AddSingleton<AuthDialog>();
